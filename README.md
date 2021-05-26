@@ -1,2 +1,3 @@
-# DTools
-Python package filled with useful tools!
+## 🍣 sushitools
+
+python package with various different utilities and tools to make life easier.
