@@ -1,4 +1,4 @@
-from dtools.types import dataenum
+from sushitools.types import dataenum
 
 
 def test_dataenum():

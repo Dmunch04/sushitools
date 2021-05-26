@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "dtools"
+name = "sushitools"
 version = "0.1.0"
-description = "python package filled with various useful tools"
+description = "python package with various different utilities and tools to make life easier."
 authors = ["munchii <daniellmunch@gmail.com>"]
 license = "MIT"
 readme = "README.md"
