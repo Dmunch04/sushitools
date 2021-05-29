@@ -6,7 +6,9 @@ from typing import List, Tuple
 # TODO: im pretty sure the enum fields arent comparable yet. so 2 vars of the same enum field doesnt equal because theyre different objects
 
 _enum_template = """\
-class {name}:
+from sushitools.cf.match import Matchable, matchable
+
+class {name}(Matchable):
     'DataEnum {name}'
 
     __slots__ = ("__instance")
@@ -24,6 +26,7 @@ class {name}:
         return getattr(self.__instance, name)
 
     def __eq__(self, other):
+        print(other)
         if not isinstance(other.__instance, self.__instance.__class__):
             return False
 
@@ -35,13 +38,20 @@ class {name}:
     def __str__(self):
         return self.__instance.__str__()
 
+    def get_values(self):
+        return self.__instance.get_values()
+
+    @staticmethod
+    def get_n_values():
+        return self.__instance.get_n_values()
+
 {cdefs}
 
 {fdefs}
 """
 
 _class_template = """\
-    class __{name}_{fname}:
+    class __{name}_{fname}(Matchable):
         __slots__ = ({fargsq})
 
         COMPARATOR = {id}
@@ -51,11 +61,31 @@ _class_template = """\
 
         def __str__(self):
             return "{name}.{fname}({fargs})"
+
+        def get_values(self):
+            return ({fsargs},)
+
+        @staticmethod
+        def get_n_values():
+            return {fsargs_len}
 """
 
 _field_template = """\
     @staticmethod
+    @matchable(__{name}_{fname})
     def {fname}({fargs}):
+        tmp = {name}()
+        tmp.__new_{fname}({fargs})
+        return tmp
+
+    def __new_{fname}(self, {fargs}):
+        self.__instance = self.__{name}_{fname}({fargs})
+"""
+
+_property_field_template = """\
+    @staticmethod
+    @property
+    def {fname}():
         tmp = {name}()
         tmp.__new_{fname}({fargs})
         return tmp
@@ -90,10 +120,14 @@ def dataenum(name: str, fields: List[Tuple[str]]):
                 fargs=fargs,
                 fassigns=fassigns,
                 fsargs=", ".join([f"self.{arg}" for arg in field[1:]]),
+                fsargs_len=len([arg for arg in field[1:]]),
             )
         )
 
-        enum_fields.append(_field_template.format(name=name, fname=fname, fargs=fargs))
+        if len(fargs) > 0:
+            enum_fields.append(_field_template.format(name=name, fname=fname, fargs=fargs))
+        else:
+            enum_fields.append(_property_field_template.format(name=name, fname=fname))
 
         i += 1
 
