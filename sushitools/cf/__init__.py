@@ -1,1 +1,1 @@
-from .match import Matchable, matchable
+from .match import Matchable
