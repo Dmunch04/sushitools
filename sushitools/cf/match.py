@@ -6,15 +6,14 @@ class Matchable(object):
     def get_values(cls) -> List[Any]:
         raise NotImplementedError
 
-    @staticmethod
     @classmethod
-    def get_n_values() -> int:
+    def get_n_values(cls) -> int:
         raise NotImplementedError
 
     def match(self, *cases: Tuple[Tuple[Any, Callable]]) -> NoReturn:
         for case in cases:
             if not (isinstance(case, tuple) or isinstance(case, list)):
-                raise ValueError("cannot match against a singular value.")
+                raise ValueError("case must be a tuple of value and callback")
 
             if not len(case) == 2:
                 raise ValueError("case must only have a value and a callable.")
@@ -22,52 +21,25 @@ class Matchable(object):
             comp, call = case
             call_n_args = call.__code__.co_argcount
 
-            if issubclass(comp, Matchable):
-                self_repr = str(self)
-                comp_repr = None
-
-                try:
-                    tmp_str = "tmp = comp({args})".format(
-                        args=", ".join(["None" for arg in range(comp.get_n_values())])
-                    )
-
-                    namespace = dict(__name__="tmp_t")
-                    namespace["comp"] = comp
-                    exec(tmp_str, namespace)
-                    result = namespace["tmp"]
-
-                    comp_repr = str(result)
-                except:
-                    pass
-
-                if (
-                    (self.get_n_values() == comp.get_n_values()) and
-                    (self.__str__() == comp.__str__) or
-                    (self_repr == comp_repr)
-                ):
-                    exec(
-                        "call({args})".format(
-                            args=", ".join([f"'{str(val)}'" for val in self.get_values()[:call_n_args]])
-                        )
-                    )
-
-                    return
-            elif hasattr(comp, "_matchable"):
-                # TODO: ?
-                matchable = comp._matchable
-
-                return
-            elif value == comp:
+            if self.__eq__(comp):
                 if call_n_args > 0:
-                    raise ValueError("cannot call callback when case is non-matchable.")
+                    call_template = "res = call({args})"
 
-                case()
+                    str_args = []
+                    for arg in self.get_values():
+                        str_args.append(str(arg))
 
-                return
+                    arg_difference = call_n_args - self.get_n_values()
+                    if arg_difference < 0:  # remove remaining values from argset
+                        str_args = str_args[:arg_difference]
+                    elif arg_difference > 0:  # add missing values to argset
+                        for i in range(arg_difference):
+                            str_args.append("None")
 
+                    f_call = call_template.format(args=",".join(str_args))
 
-def matchable(matchable: Matchable) -> Callable:
-    def wrapper(callback: Callable):
-        setattr(callback, "_matchable", matchable)
-        return matchable
-    return wrapper
+                    namespace = dict(__name__="match")
+                    namespace["call"] = call
+                    exec(f_call)
+                else:
+                    call()
