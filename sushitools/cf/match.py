@@ -1,4 +1,8 @@
-from typing import List, Any, Tuple, Callable, NoReturn
+from typing import List, Any, Tuple, Callable, NoReturn, Union
+
+
+def create_value_cb(value: Any) -> Callable:
+    return lambda: value
 
 
 class Matchable(object):
@@ -10,15 +14,17 @@ class Matchable(object):
     def get_n_values(cls) -> int:
         raise NotImplementedError
 
-    def match(self, *cases: Tuple[Tuple[Any, Callable]]) -> NoReturn:
+    def match(self, *cases: Tuple[Any, Union[Callable, Any]]) -> Union[NoReturn, Any]:
         for case in cases:
             if not (isinstance(case, tuple) or isinstance(case, list)):
-                raise ValueError("case must be a tuple of value and callback")
+                raise ValueError("case must be a tuple of value and callback or return value")
 
             if not len(case) == 2:
-                raise ValueError("case must only have a value and a callable.")
+                raise ValueError("case must only have a value and a callable or return value.")
 
             comp, call = case
+            call = call if callable(call) else create_value_cb(call)
+            
             call_n_args = call.__code__.co_argcount
 
             if self.__eq__(comp):
@@ -30,9 +36,9 @@ class Matchable(object):
                         str_args.append(str(arg))
 
                     arg_difference = call_n_args - self.get_n_values()
-                    if arg_difference < 0:  # remove remaining values from argset
+                    if arg_difference < 0: # remove remaining values from argset
                         str_args = str_args[:arg_difference]
-                    elif arg_difference > 0:  # add missing values to argset
+                    elif arg_difference > 0: # add missing values to argset
                         for i in range(arg_difference):
                             str_args.append("None")
 
@@ -40,6 +46,7 @@ class Matchable(object):
 
                     namespace = dict(__name__="match")
                     namespace["call"] = call
-                    exec(f_call)
+                    exec(f_call, namespace)
+                    return namespace["res"]
                 else:
-                    call()
+                    return call()
