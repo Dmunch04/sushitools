@@ -116,3 +116,33 @@ def test_match_return_value():
         (five.val + 1, lambda val: Integer(val))
     )
     assert six.value == 6
+    
+def test_match_default_catch():
+    class Person(match.Matchable):
+        def __init__(self, name):
+            self.name = name
+
+        def get_values(self):
+            return [self.name]
+
+        def get_n_values(self):
+            return 1
+
+        def __eq__(self, other):
+            if isinstance(other, Person):
+                return self.name == other.name
+            else:
+                return self.name == other
+
+    me = Person("Daniel")
+    me.match(
+        ("Bob", lambda: print("it's bob!")),
+        default = lambda name: print("it's %s!" % name),
+    )
+
+    name = me.match(
+        ("Michael", "Mike"),
+        ("Richard", "Dick"),
+        default = lambda p: p,
+    )
+    assert name == "Daniel"
