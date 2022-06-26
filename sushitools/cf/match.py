@@ -60,4 +60,4 @@ class Matchable(object):
 
         if default:
             call = default if callable(default) else create_value_cb(default)
-            perform_call(call, self.get_values(), self.get_n_values())
+            return perform_call(call, self.get_values(), self.get_n_values())
