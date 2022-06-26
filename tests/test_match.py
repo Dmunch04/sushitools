@@ -110,3 +110,9 @@ def test_match_return_value():
         (Integer(4), lambda val: Integer(val + 1)),
     )
     assert five.val == 5
+    
+    six = Integer(6).match(
+        (five, lambda: Integer(6)),
+        (five.val + 1, lambda val: Integer(val))
+    )
+    assert six.value == 6
