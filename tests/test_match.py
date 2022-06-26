@@ -65,3 +65,48 @@ def test_match_dataenum_noargs():
         (Version.Two, lambda: print("v2")),
         (Version.Three, lambda: print("v3")),
     )
+    
+def test_match_return_value():
+    class Integer(match.Matchable):
+        def __init__(self, val):
+            self.val = val
+
+        def get_values(self):
+            return [self.val]
+
+        def get_n_values(self):
+            return 1
+
+        def __eq__(self, other):
+            if isinstance(other, Integer):
+                return self.val == other.val
+            else:
+                return self.val == other
+        
+    one = Integer(1)
+    res = one.match(
+        (1, 1+1),
+        (2, 2+1),
+    )
+    assert res == 2
+
+    two = Integer(2)
+    two = two.match(
+        (1, Integer(1+2)),
+        (2, Integer(2+2)),
+    )
+    assert two.val == 4
+    
+    three = Integer(3)
+    result = three.match(
+        (2, lambda val: val * val),
+        (3, lambda val: val * val),
+    )
+    assert result == 9
+    
+    four = Integer(4)
+    five = four.match(
+        (Integer(5), lambda val: Integer(val)),
+        (Integer(4), lambda val: Integer(val + 1)),
+    )
+    assert five.val == 5
