@@ -1,16 +1,15 @@
 from sushitools.types import dataenum
+from sushitools.cf import match
 
 
 def test_match_dataenum():
     Color = dataenum(
         "Color",
-        [
-            ("RGB", "r", "g", "b"),
-            ("RGBA", "r", "g", "b", "a"),
-            ("HEX", "hex"),
-            ("HSL", "h", "s", "l"),
-            ("HSLA", "h", "s", "l", "a"),
-        ],
+        ("RGB", "r", "g", "b"),
+        ("RGBA", "r", "g", "b", "a"),
+        ("HEX", "hex"),
+        ("HSL", "h", "s", "l"),
+        ("HSLA", "h", "s", "l", "a"),
     )
 
     black = Color.HEX("#000000")
@@ -115,7 +114,7 @@ def test_match_return_value():
         (five, lambda: Integer(6)),
         (five.val + 1, lambda val: Integer(val))
     )
-    assert six.value == 6
+    assert six.val == 6
     
 def test_match_default_catch():
     class Person(match.Matchable):

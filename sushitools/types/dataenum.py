@@ -10,7 +10,8 @@ class staticproperty(staticmethod):
 
 
 _enum_template = """\
-from match import Matchable
+#from match import Matchable
+from sushitools.cf.match import Matchable
 class {name}(Matchable):
     'DataEnum {name}'
     __slots__ = ("__instance")
@@ -76,7 +77,12 @@ _property_field_template = """\
 """
 
 
+# explanation for why this is commented out:
+# if you provide a list instead of vararg of tuple,
+# then it wrapes the list in a tuple which fucks everything up.
+# UPDATE: i changed it to other way around. lists are no longer supported (for now?)
 def dataenum(name: str, *fields: List[Tuple[str]]):
+#def dataenum(name: str, fields: List[Tuple[str]]):
     enum_classes = []
     enum_fields = []
 
