@@ -37,6 +37,8 @@ class {name}(Matchable):
         return self.__instance.get_values()
     def get_n_values(self):
         return self.__instance.get_n_values()
+    def get_instance(self):
+        return self.__instance
 {cdefs}
 {fdefs}
 """
