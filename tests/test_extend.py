@@ -18,3 +18,16 @@ def test_extend():
 
     assert str(me) == "Person.MALE"
     assert me.get_instance_name() == "MALE"
+
+
+def test_extend_static():
+    class Person(object):
+        def __init__(self, name: str, age: int):
+            self.name = name
+            self.age = age
+
+    @extend(Person, static=True)
+    def new(name: str, age: int = 18):
+        return Person(name, age)
+
+    assert Person.new("Daniel").age == 18

@@ -5,12 +5,14 @@ from typing import List, Tuple
 
 
 class staticproperty(staticmethod):
+    """defines a static property of a class
+    """
+
     def __get__(self, *_):
         return self.__func__()
 
 
 _enum_template = """\
-#from match import Matchable
 from sushitools.cf.match import Matchable
 class {name}(Matchable):
     'DataEnum {name}'
@@ -79,12 +81,16 @@ _property_field_template = """\
 """
 
 
-# explanation for why this is commented out:
-# if you provide a list instead of vararg of tuple,
-# then it wrapes the list in a tuple which fucks everything up.
-# UPDATE: i changed it to other way around. lists are no longer supported (for now?)
 def dataenum(name: str, *fields: List[Tuple[str]]):
-#def dataenum(name: str, fields: List[Tuple[str]]):
+    """creates a new instance of a dataenum class. a dataenum works like an enum, but can store data in each field
+
+    Args:
+        name (str): the name of the dataenum
+        *fields (List[Tuple[str]]): all the fields in the dataenum
+
+    Returns:
+        _type_: the newly created dataenum instance
+    """
     enum_classes = []
     enum_fields = []
 

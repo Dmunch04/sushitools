@@ -36,15 +36,42 @@ def perform_call(cb: Callable, args: List[Any], n_values: int) -> Union[Any, Non
 
 
 class Matchable(object):
+    """base class for all objects than can be matched
+    """
+
     @classmethod
     def get_values(cls) -> List[Any]:
+        """get all the values that can be matched
+
+        Returns:
+            List[Any]: a list of all the possible values to be matched against
+        """
         raise NotImplementedError
 
     @classmethod
     def get_n_values(cls) -> int:
+        """the amount of values that can be matched
+
+        Returns:
+            int: the amount of values
+        """
+
         raise NotImplementedError
 
     def match(self, *cases: Tuple[Any, Union[Callable, Any]], default: Union[Callable, Any, None] = None) -> Union[NoReturn, Any]:
+        """matches self against all cases until a success is found
+
+        Args:
+            *cases (Tuple[Any, Union[Callable, Any]]): all the match cases
+            default (Union[Callable, Any, None], optional): the default branch to goto if no other case is matched. defaults to None.
+
+        Raises:
+            ValueError: if case is not a tuple consisting of a match value and callback
+
+        Returns:
+            Union[NoReturn, Any]: either nothing (if matched branch is a callback) or any value
+        """
+
         for case in cases:
             if not (isinstance(case, tuple) or isinstance(case, list)):
                 raise ValueError("case must be a tuple of value and callback or return value")
