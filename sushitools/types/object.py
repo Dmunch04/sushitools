@@ -47,6 +47,7 @@ def fields(cls: type) -> list[ObjectField]:
 def to_json(self: type, *, encoder: JSONEncoder = default_encoder(), pretty: bool = False, skip_null: bool = False, use_default_value: bool = False) -> str:
     kwargs = {}
     if pretty:
+        # TODO: what if another hook/encoder does not accept the "indent" arg?
         kwargs["indent"] = 4
 
     return encoder.encode(to_dict(self, skip_null=skip_null, use_default_value=use_default_value), **kwargs)
