@@ -4,6 +4,8 @@ from typing import Callable
 
 
 class JSONDecoder:
+    """the base class for sushitools json decoders"""
+
     def __init__(self, decode_fn: Callable[[str, ...], dict[str, any]]):
         self.__decode_fn = decode_fn
 
@@ -34,6 +36,8 @@ class JSONDecoder:
 
 
 class JSONEncoder:
+    """the base class for sushitools json encoders"""
+
     def __init__(self, encode_fn: Callable[[dict[str, any], ...], str]):
         self.__encode_fn = encode_fn
 

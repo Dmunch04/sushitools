@@ -1,6 +1,10 @@
 from types import GenericAlias
+from typing import TypeVar
 from ..json import JSONEncoder, JSONDecoder, default_encoder, default_decoder
 from ..primitive import any_type_of
+
+
+T = TypeVar("T")
 
 
 __OBJECT_NAME = "__object_name__"
@@ -23,7 +27,16 @@ def __get_type_repr(t: type):
 # NOTE: access GenericAlias (ex. list[str]) param types using `t.__args__`
 
 
-def is_object(cls: type) -> bool:
+def is_object(cls: T) -> bool:
+    """checks whether the given argument is an Object
+
+    Args:
+        cls (T): the class/type to check
+
+    Returns:
+        bool: `True` if the class/type has been given the `Object` decorator, `False` if not
+    """
+
     return (
         hasattr(cls, __OBJECT_NAME)
         and hasattr(cls, __OBJECT_FIELDS)
@@ -46,14 +59,14 @@ class ObjectField(object):
         self.default_value = default_value
         self.initialized = initialized
 
-    def get_value(self, cls: type) -> any:
+    def get_value(self, cls: T) -> any:
         """finds the value of a specific field in an Object class instance
 
         Args:
-            cls (type): the Object instance to look for the field value in
+            cls (T): the Object instance to look for the field value in
 
         Returns:
-            any: the value of the field or None if field is not found
+            any: the value of the field or `None` if field is not found
         """
 
         global __OBJECT_FIELDS
@@ -63,11 +76,11 @@ class ObjectField(object):
         return getattr(cls, self.name, None)
 
 
-def fields(cls: type) -> list[ObjectField]:
+def fields(cls: T) -> list[ObjectField]:
     """finds all the fields of that Object class/instance
 
     Args:
-        cls (type): the Object class/instance to find fields of
+        cls (T): the Object class/instance to find fields of
 
     Returns:
         List[ObjectField]: a list of all fields the class contains
@@ -81,7 +94,7 @@ def fields(cls: type) -> list[ObjectField]:
 
 
 def __to_json(
-    self: type,
+    self: T,
     *,
     encoder: JSONEncoder = default_encoder(),
     skip_null: bool = False,
@@ -98,7 +111,7 @@ def __to_json(
 
 
 def __from_json(
-    cls: type,
+    cls: T,
     data: str | dict[str, any],
     *,
     decoder: JSONDecoder = default_decoder(),
@@ -151,7 +164,7 @@ def __from_json(
 
 
 def __to_dict(
-    self: type, *, skip_null: bool = False, use_default_value: bool = False
+    self: T, *, skip_null: bool = False, use_default_value: bool = False
 ) -> dict[str, any]:
     if not is_object(self):
         raise Exception("cannot turn non Object class into dict")
@@ -171,7 +184,7 @@ def __to_dict(
     return d
 
 
-def __make_constructor(cls: type):
+def __make_constructor(cls: T):
     if not is_object(cls):
         raise Exception("cannot make constructor for non Object class")
 
@@ -189,7 +202,7 @@ def __make_constructor(cls: type):
     return namespace["__init__"]
 
 
-def __process_attrs(cls: type):
+def __process_attrs(cls: T):
     setattr(
         cls,
         __OBJECT_NAME,
@@ -197,7 +210,7 @@ def __process_attrs(cls: type):
     )
 
 
-def __process_fields(cls: type):
+def __process_fields(cls: T):
     fields = {}
     for key, ftype in getattr(cls, "__annotations__").items():
         df = getattr(cls, str(key), None)
@@ -207,15 +220,15 @@ def __process_fields(cls: type):
     setattr(cls, __OBJECT_FIELDS_LEN, len(fields))
 
 
-def Object(cls):
+def Object(cls: T) -> T:
     """decorator for adding helpful methods to your class
     TODO: write more
 
     Args:
-        cls: ...
+        cls (T): ...
 
     Returns:
-        _: the given class
+        T: the processed Object class
     """
 
     if not isinstance(cls, type):

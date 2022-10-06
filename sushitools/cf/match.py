@@ -1,11 +1,32 @@
-from typing import List, Any, Tuple, Callable, NoReturn, Union
+from typing import Callable, NoReturn, Any
 
 
-def create_value_cb(value: Any) -> Callable:
+def create_value_cb(value: any) -> Callable:
+    """creates a lambda function that returns the given value
+
+    Args:
+        value (any): the value to wrap in a lambda function
+
+    Returns:
+        Callable: the created lambda
+    """
+
     return lambda: value
 
 
-def perform_call(cb: Callable, args: List[Any], n_values: int) -> Union[Any, None]:
+def perform_call(cb: Callable, args: list[any], n_values: int) -> Any | None:
+    """performs a call to the given function with the given arguments.
+    before this is does various checks such as making sure there are never too few nor too many arguments passed
+
+    Args:
+        cb (Callable): the function to call
+        args (list[any]): the arguments to be passed to the function
+        n_values (int): the amount of arguments
+
+    Returns:
+        any | None: the result of the function call if any, else `None`
+    """
+
     call_n_args = cb.__code__.co_argcount
 
     if call_n_args > 0:
@@ -39,7 +60,7 @@ class Matchable(object):
     """base class for all objects than can be matched"""
 
     @classmethod
-    def get_values(cls) -> List[Any]:
+    def get_values(cls) -> list[any]:
         """get all the values that can be matched
 
         Returns:
@@ -58,10 +79,8 @@ class Matchable(object):
         raise NotImplementedError
 
     def match(
-        self,
-        *cases: Tuple[Any, Union[Callable, Any]],
-        default: Union[Callable, Any, None] = None
-    ) -> Union[NoReturn, Any]:
+        self, *cases: tuple[any, Any | Callable], default: Any | Callable | None = None
+    ) -> NoReturn | None:
         """matches self against all cases until a success is found
 
         Args:
