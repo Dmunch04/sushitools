@@ -64,7 +64,15 @@ def from_json(cls: type, data: str | dict[str, any], *, decoder: JSONDecoder = d
         if field is None:
             continue
         elif value is None:
-            args[key] = "None"
+            # TODO: NOTE: hmm perhaps this check should be outside this dict? so if the key wasn't in the given data
+            # ^ then we should check it. because if the key was in data and value is None/null, then shouldn't that
+            # ^ override the default value, compared to if None/null wasn't provided in the data. to clarify: if `data`
+            # ^ contains "key" with value of "None" then the field should be set to "None". if `data` on the other hand
+            # ^ did not contain "key" then the "key" field should become ("key").default_value
+            if not field.initialized:
+                args[key] = "None"
+            else:
+                args[key] = field.default_value
             continue
         if not any_type_of(value, field.ftype):
             raise Exception("%s Object field '%s' must be of type '%s'" % (getattr(cls, __OBJECT_NAME), key, __get_type_repr(field.ftype)))

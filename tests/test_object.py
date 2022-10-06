@@ -25,5 +25,6 @@ def test_struct():
     data: str = a.to_json()
     b: Person = Person.from_json(data)
     assert b.name == a.name
+    assert b.other == 6.9
     assert b.d
     assert len(b.e) == 3 == len(a.e)
