@@ -1,5 +1,5 @@
 from types import GenericAlias
-from ..json import JSONValue
+#from ..json import JSONValue
 from ..primitive import is_primitive
 
 
@@ -47,7 +47,7 @@ def fields(cls: type) -> list[ObjectField]:
     return fields
 
 
-def to_json(self: type) -> JSONValue:
+def to_json(self: type) -> str:
     """
     data = {}
     for field in fields(self):
@@ -80,6 +80,7 @@ def to_json(self: type) -> JSONValue:
             else:
                 # are there other cases we want to catch?
                 raise Exception("cannot convert field %s of type %s to json" % (field.name, str(field.type)))
+    """
     """
     data = {}
     for field in fields(self):
@@ -114,6 +115,8 @@ def to_json(self: type) -> JSONValue:
                 raise Exception("cannot convert field %s of type %s to json" % (field.name, str(field.type)))
     
     return JSONValue(data)
+    """
+    return ""
 
 
 def make_constructor(cls: type):

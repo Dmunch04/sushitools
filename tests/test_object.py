@@ -1,6 +1,6 @@
 from sushitools.types import Object, fields, is_object
 from sushitools import is_primitive
-from sushitools.json import to_json, JSONValue
+#from sushitools.json import to_json, JSONValue
 from json import dumps
 import time
 
@@ -21,8 +21,8 @@ def test_struct():
     a: Person = Person(name="Daniel", d=True, e=[[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     #print(to_json(a.to_json()))
 
-    print(is_object(Person))
-    print(is_object(a))
+    #print(is_object(Person))
+    #print(is_object(a))
 
     """
     d = {"name": "Daniel", "age": 18.51384931, "family": [{"name": "Kenneth", "age": 46}, {"name": "Pernille", "age": 45}]}
