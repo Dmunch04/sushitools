@@ -43,3 +43,17 @@ def is_container(t: any) -> bool:
         dict,
         set,
     )
+
+
+def any_type_of(t: any, o: any) -> bool:
+    if isinstance(t, GenericAlias):
+        t = t.__origin__
+    if isinstance(o, GenericAlias):
+        o = o.__origin__
+
+    if not isinstance(t, type):
+        t = type(t)
+    if not isinstance(o, type):
+        o = type(o)
+
+    return t == o

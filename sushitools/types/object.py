@@ -1,6 +1,6 @@
 from types import GenericAlias
-from ..json import to_json as gen_json
-from ..primitive import is_primitive
+from ..json import JSONEncoder, JSONDecoder, default_encoder, default_decoder
+from ..primitive import any_type_of
 
 
 __OBJECT_NAME = "__object_name__"
@@ -44,9 +44,59 @@ def fields(cls: type) -> list[ObjectField]:
     return [field for field in getattr(cls, __OBJECT_FIELDS).values()]
 
 
-def to_json(self: type) -> str:
-    # TODO: use new json system
-    return ""
+def to_json(self: type, *, encoder: JSONEncoder = default_encoder(), pretty: bool = False, skip_null: bool = False, use_default_value: bool = False) -> str:
+    kwargs = {}
+    if pretty:
+        kwargs["indent"] = 4
+
+    return encoder.encode(to_dict(self, skip_null=skip_null, use_default_value=use_default_value), **kwargs)
+
+
+def from_json(cls: type, data: str | dict[str, any], *, decoder: JSONDecoder = default_decoder()) -> type:
+    if isinstance(data, str):
+        data = decoder.decode(data)
+
+    f = getattr(cls, __OBJECT_FIELDS)
+
+    args: dict[str, str] = {}
+    for key, value in data.items():
+        field = f.get(key, None)
+        if field is None:
+            continue
+        elif value is None:
+            args[key] = "None"
+            continue
+        if not any_type_of(value, field.ftype):
+            raise Exception("%s Object field '%s' must be of type '%s'" % (getattr(cls, __OBJECT_NAME), key, __get_type_repr(field.ftype)))
+        if field.ftype is str:
+            value = '"%s"' % str(value)
+        args[key] = str(value)
+
+    instantiate_call = "res = OBJECT({args})".format(
+        args=", ".join([f"{key}={value}" for key, value in args.items()])
+    )
+
+    namespace = dict(__name__="object_%s_from_json" % cls.__name__)
+    namespace["OBJECT"] = cls
+    exec(instantiate_call, namespace)
+    return namespace["res"]
+
+
+def to_dict(self: type, *, skip_null: bool = False, use_default_value: bool = False) -> dict[str, any]:
+    d = {}
+    for key, field in getattr(self, __OBJECT_FIELDS).items():
+        val = getattr(self, field.name, None)
+        if val is None:
+            if skip_null:
+                continue
+            elif use_default_value:
+                val = field.default_value
+        if any_type_of(val, set):
+            val = list(val)
+        d[key] = val
+
+    return d
+
 
 
 def make_constructor(cls: type):
@@ -81,12 +131,14 @@ def __process_fields(cls: type):
 
 def Object(cls):
     if not isinstance(cls, type):
-        raise Exception("struct decorator can only be used on class object")
+        raise Exception("Object decorator can only be used on class object")
 
     __process_attrs(cls)
     __process_fields(cls)
 
     setattr(cls, "__init__", make_constructor(cls))
     setattr(cls, "to_json", to_json)
+    setattr(cls, "from_json", classmethod(from_json))
+    setattr(cls, "to_dict", to_dict)
 
     return cls
