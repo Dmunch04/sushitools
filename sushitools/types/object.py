@@ -44,20 +44,21 @@ def fields(cls: type) -> list[ObjectField]:
     return [field for field in getattr(cls, __OBJECT_FIELDS).values()]
 
 
-def to_json(self: type, *, encoder: JSONEncoder = default_encoder(), pretty: bool = False, skip_null: bool = False, use_default_value: bool = False) -> str:
-    kwargs = {}
+def to_json(self: type, *, encoder: JSONEncoder = default_encoder(), pretty: bool = False, skip_null: bool = False, use_default_value: bool = False, **kwargs) -> str:
+    kwa = {**kwargs}
     if pretty:
         # TODO: what if another hook/encoder does not accept the "indent" arg?
-        kwargs["indent"] = 4
+        # NOTE: current solution to above is allowing user to specify own kwargs. so perhaps this pretty arg is not needed
+        kwa["indent"] = 4
 
-    return encoder.encode(to_dict(self, skip_null=skip_null, use_default_value=use_default_value), **kwargs)
+    return encoder.encode(to_dict(self, skip_null=skip_null, use_default_value=use_default_value), **kwa)
 
 
-def from_json(cls: type, data: str | dict[str, any], *, decoder: JSONDecoder = default_decoder()) -> type:
+def from_json(cls: type, data: str | dict[str, any], *, decoder: JSONDecoder = default_decoder(), **kwargs) -> type:
     # TODO: this is a classmethod, meaning that it can also be called on an instance object; what do we do when that happens?
 
     if isinstance(data, str):
-        data = decoder.decode(data)
+        data = decoder.decode(data, **kwargs)
 
     f = getattr(cls, __OBJECT_FIELDS)
 
