@@ -1,5 +1,5 @@
 from types import GenericAlias
-from typing import TypeVar
+from typing import TypeVar, Callable
 from ..json import JSONEncoder, JSONDecoder, default_encoder, default_decoder
 from ..primitive import any_type_of
 
@@ -116,7 +116,7 @@ def __from_json(
     *,
     decoder: JSONDecoder = default_decoder(),
     **kwargs,
-) -> type:
+) -> T:
     if not is_object(cls):
         raise Exception("cannot decode non Object class from json")
 
@@ -184,7 +184,7 @@ def __to_dict(
     return d
 
 
-def __make_constructor(cls: T):
+def __make_constructor(cls: T) -> Callable:
     if not is_object(cls):
         raise Exception("cannot make constructor for non Object class")
 
