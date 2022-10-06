@@ -1,6 +1,6 @@
 import json
 from sushitools.json import default_encoder, default_decoder
-from sushitools.types import Object, fields, is_object
+from sushitools.types import Object, fields, is_object, ObjectField
 
 
 def test_INIT():
@@ -28,3 +28,11 @@ def test_struct():
     assert b.other == 6.9
     assert b.d
     assert len(b.e) == 3 == len(a.e)
+
+    assert is_object(Person) and is_object(a) and is_object(b)
+
+    b.name = "Bob"
+
+    field: ObjectField = fields(Person)[0]
+    assert field.get_value(a) == "Daniel"
+    assert field.get_value(b) == "Bob"

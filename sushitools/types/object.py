@@ -23,18 +23,25 @@ def __get_type_repr(t: type):
 # NOTE: access GenericAlias (ex. list[str]) param types using `t.__args__`
 
 
-class ObjectField(object):
-    __slots__ = ("name", "ftype", "default_value", "initialized")
+def is_object(cls: type) -> bool:
+    return hasattr(cls, __OBJECT_NAME) and hasattr(cls, __OBJECT_FIELDS) and hasattr(cls, __OBJECT_FIELDS_LEN)
 
-    def __init__(self, name: str, ftype: type, default_value: any = None, initialized: bool = False):
+
+class ObjectField(object):
+    __slots__ = ("name", "field_type", "default_value", "initialized")
+
+    def __init__(self, name: str, field_type: type, default_value: any = None, initialized: bool = False):
         self.name = name
-        self.ftype = ftype
+        self.field_type = field_type
         self.default_value = default_value
         self.initialized = initialized
 
-        
-def is_object(cls: type) -> bool:
-    return hasattr(cls, __OBJECT_NAME) and hasattr(cls, __OBJECT_FIELDS) and hasattr(cls, __OBJECT_FIELDS_LEN)
+    def get_value(self, cls: type) -> any:
+        global __OBJECT_FIELDS
+        if not is_object(cls):
+            raise Exception("cannot find field value on non Object class")
+
+        return getattr(cls, self.name, None)
 
 
 def fields(cls: type) -> list[ObjectField]:
@@ -45,6 +52,9 @@ def fields(cls: type) -> list[ObjectField]:
 
 
 def to_json(self: type, *, encoder: JSONEncoder = default_encoder(), pretty: bool = False, skip_null: bool = False, use_default_value: bool = False, **kwargs) -> str:
+    if not is_object(self):
+        raise Exception("cannot encode non Object class to json")
+
     kwa = {**kwargs}
     if pretty:
         # TODO: what if another hook/encoder does not accept the "indent" arg?
@@ -55,6 +65,9 @@ def to_json(self: type, *, encoder: JSONEncoder = default_encoder(), pretty: boo
 
 
 def from_json(cls: type, data: str | dict[str, any], *, decoder: JSONDecoder = default_decoder(), **kwargs) -> type:
+    if not is_object(cls):
+        raise Exception("cannot decode non Object class from json")
+
     # TODO: this is a classmethod, meaning that it can also be called on an instance object; what do we do when that happens?
 
     if isinstance(data, str):
@@ -79,9 +92,9 @@ def from_json(cls: type, data: str | dict[str, any], *, decoder: JSONDecoder = d
                 args[key] = str(field.default_value)
             continue
         # TODO: do type checking on containers; fx list[int] -> all elements should be int
-        if not any_type_of(value, field.ftype):
-            raise Exception("%s Object field '%s' must be of type '%s'" % (getattr(cls, __OBJECT_NAME), key, __get_type_repr(field.ftype)))
-        if field.ftype is str:
+        if not any_type_of(value, field.field_type):
+            raise Exception("%s Object field '%s' must be of type '%s'" % (getattr(cls, __OBJECT_NAME), key, __get_type_repr(field.field_type)))
+        if field.field_type is str:
             value = '"%s"' % str(value)
         args[key] = str(value)
 
@@ -96,6 +109,9 @@ def from_json(cls: type, data: str | dict[str, any], *, decoder: JSONDecoder = d
 
 
 def to_dict(self: type, *, skip_null: bool = False, use_default_value: bool = False) -> dict[str, any]:
+    if not is_object(self):
+        raise Exception("cannot turn non Object class into dict")
+
     d = {}
     for key, field in getattr(self, __OBJECT_FIELDS).items():
         val = getattr(self, field.name, None)
@@ -118,7 +134,7 @@ def make_constructor(cls: type):
     f: list[ObjectField] = fields(cls)
 
     init_def = __OBJECT_INIT_TEMPLATE.format(
-        args=", ".join([f"{field.name}: {__get_type_repr(field.ftype)} = None" for field in f]),
+        args=", ".join([f"{field.name}: {__get_type_repr(field.field_type)} = None" for field in f]),
         assignments='\n'.join([f"\tself.{field.name} = {field.name}" for field in f]),
     )
 
