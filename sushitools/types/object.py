@@ -1,5 +1,5 @@
 from types import GenericAlias
-#from ..json import JSONValue
+from ..json import to_json as gen_json
 from ..primitive import is_primitive
 
 
@@ -11,6 +11,7 @@ __OBJECT_INIT_TEMPLATE = """\
 def __init__(self, {args}):
 {assignments}
 """
+
 
 def __get_type_repr(t: type):
     if isinstance(t, GenericAlias):
@@ -40,82 +41,11 @@ def fields(cls: type) -> list[ObjectField]:
     if not is_object(cls):
         raise Exception("cannot find fields on non Object class")
 
-    fields = []
-    for key, field in getattr(cls, __OBJECT_FIELDS).items():
-        fields.append(field)
-
-    return fields
+    return [field for field in getattr(cls, __OBJECT_FIELDS).values()]
 
 
 def to_json(self: type) -> str:
-    """
-    data = {}
-    for field in fields(self):
-        if field.ftype in (int, float, str, bool, list, dict):
-            data[field.name] = getattr(self, field.name, field.default_value)
-        elif is_object(field.ftype):
-            df = getattr(self, field.name, None)
-            if df is None:
-                data[field.name] = {}
-            else:
-                data[field.name] = df.to_json()
-        else:
-            df = getattr(self, field.name, None)
-            if df is not None:
-                if hasattr(df, "to_json"):
-                    try:
-                        data[field.name] = df.to_json()
-                    except:
-                        raise Exception("cannot convert field %s of type %s to json" % (field.name, str(field.type)))
-                elif hasattr(df, "toJson"):
-                    try:
-                        data[field.name] = df.toJson()
-                    except:
-                        raise Exception("cannot convert field %s of type %s to json" % (field.name, str(field.type)))
-                elif hasattr(df, "json"):
-                    try:
-                        data[field.name] = df.json()
-                    except:
-                        raise Exception("cannot convert field %s of type %s to json" % (field.name, str(field.type)))
-            else:
-                # are there other cases we want to catch?
-                raise Exception("cannot convert field %s of type %s to json" % (field.name, str(field.type)))
-    """
-    """
-    data = {}
-    for field in fields(self):
-        if is_primitive(field.ftype):
-            data[field.name] = JSONValue(getattr(self, field.name, field.default_value))
-        elif is_object(field.ftype):
-            df = getattr(self, field.name, None)
-            if df is None:
-                data[field.name] = JSONValue({})
-            else:
-                data[field.name] = df.to_json()
-        else:
-            df = getattr(self, field.name, None)
-            if df is not None:
-                if hasattr(df, "to_json"):
-                    try:
-                        data[field.name] = df.to_json()
-                    except:
-                        raise Exception("cannot convert field %s of type %s to json" % (field.name, str(field.type)))
-                elif hasattr(df, "toJson"):
-                    try:
-                        data[field.name] = df.toJson()
-                    except:
-                        raise Exception("cannot convert field %s of type %s to json" % (field.name, str(field.type)))
-                elif hasattr(df, "json"):
-                    try:
-                        data[field.name] = df.json()
-                    except:
-                        raise Exception("cannot convert field %s of type %s to json" % (field.name, str(field.type)))
-            else:
-                # are there other cases we want to catch?
-                raise Exception("cannot convert field %s of type %s to json" % (field.name, str(field.type)))
-    
-    return JSONValue(data)
-    """
+    # TODO: use new json system
     return ""
 
 

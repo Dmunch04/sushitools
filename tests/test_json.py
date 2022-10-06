@@ -1,6 +1,7 @@
 import json
 from sushitools.json import *
 
+
 def test_json_decode():
     data = """\
 {
