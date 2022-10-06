@@ -53,6 +53,8 @@ def to_json(self: type, *, encoder: JSONEncoder = default_encoder(), pretty: boo
 
 
 def from_json(cls: type, data: str | dict[str, any], *, decoder: JSONDecoder = default_decoder()) -> type:
+    # TODO: this is a classmethod, meaning that it can also be called on an instance object; what do we do when that happens?
+
     if isinstance(data, str):
         data = decoder.decode(data)
 
@@ -72,8 +74,9 @@ def from_json(cls: type, data: str | dict[str, any], *, decoder: JSONDecoder = d
             if not field.initialized:
                 args[key] = "None"
             else:
-                args[key] = field.default_value
+                args[key] = str(field.default_value)
             continue
+        # TODO: do type checking on containers; fx list[int] -> all elements should be int
         if not any_type_of(value, field.ftype):
             raise Exception("%s Object field '%s' must be of type '%s'" % (getattr(cls, __OBJECT_NAME), key, __get_type_repr(field.ftype)))
         if field.ftype is str:
@@ -104,7 +107,6 @@ def to_dict(self: type, *, skip_null: bool = False, use_default_value: bool = Fa
         d[key] = val
 
     return d
-
 
 
 def make_constructor(cls: type):
