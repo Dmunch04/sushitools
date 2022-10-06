@@ -47,6 +47,15 @@ class ObjectField(object):
         self.initialized = initialized
 
     def get_value(self, cls: type) -> any:
+        """finds the value of a specific field in an Object class instance
+
+        Args:
+            cls (type): the Object instance to look for the field value in
+
+        Returns:
+            any: the value of the field or None if field is not found
+        """
+
         global __OBJECT_FIELDS
         if not is_object(cls):
             raise Exception("cannot find field value on non Object class")
@@ -55,6 +64,16 @@ class ObjectField(object):
 
 
 def fields(cls: type) -> list[ObjectField]:
+    """finds all the fields of that Object class/instance
+
+    Args:
+        cls (type): the Object class/instance to find fields of
+
+    Returns:
+        List[ObjectField]: a list of all fields the class contains
+
+    """
+
     if not is_object(cls):
         raise Exception("cannot find fields on non Object class")
 
@@ -189,6 +208,16 @@ def __process_fields(cls: type):
 
 
 def Object(cls):
+    """decorator for adding helpful methods to your class
+    TODO: write more
+
+    Args:
+        cls: ...
+
+    Returns:
+        _: the given class
+    """
+
     if not isinstance(cls, type):
         raise Exception("Object decorator can only be used on class object")
 
