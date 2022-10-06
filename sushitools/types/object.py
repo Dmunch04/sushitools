@@ -51,20 +51,14 @@ def fields(cls: type) -> list[ObjectField]:
     return [field for field in getattr(cls, __OBJECT_FIELDS).values()]
 
 
-def to_json(self: type, *, encoder: JSONEncoder = default_encoder(), pretty: bool = False, skip_null: bool = False, use_default_value: bool = False, **kwargs) -> str:
+def __to_json(self: type, *, encoder: JSONEncoder = default_encoder(), skip_null: bool = False, use_default_value: bool = False, **kwargs) -> str:
     if not is_object(self):
         raise Exception("cannot encode non Object class to json")
 
-    kwa = {**kwargs}
-    if pretty:
-        # TODO: what if another hook/encoder does not accept the "indent" arg?
-        # NOTE: current solution to above is allowing user to specify own kwargs. so perhaps this pretty arg is not needed
-        kwa["indent"] = 4
-
-    return encoder.encode(to_dict(self, skip_null=skip_null, use_default_value=use_default_value), **kwa)
+    return encoder.encode(__to_dict(self, skip_null=skip_null, use_default_value=use_default_value), **kwargs)
 
 
-def from_json(cls: type, data: str | dict[str, any], *, decoder: JSONDecoder = default_decoder(), **kwargs) -> type:
+def __from_json(cls: type, data: str | dict[str, any], *, decoder: JSONDecoder = default_decoder(), **kwargs) -> type:
     if not is_object(cls):
         raise Exception("cannot decode non Object class from json")
 
@@ -108,7 +102,7 @@ def from_json(cls: type, data: str | dict[str, any], *, decoder: JSONDecoder = d
     return namespace["res"]
 
 
-def to_dict(self: type, *, skip_null: bool = False, use_default_value: bool = False) -> dict[str, any]:
+def __to_dict(self: type, *, skip_null: bool = False, use_default_value: bool = False) -> dict[str, any]:
     if not is_object(self):
         raise Exception("cannot turn non Object class into dict")
 
@@ -127,7 +121,7 @@ def to_dict(self: type, *, skip_null: bool = False, use_default_value: bool = Fa
     return d
 
 
-def make_constructor(cls: type):
+def __make_constructor(cls: type):
     if not is_object(cls):
         raise Exception("cannot make constructor for non Object class")
 
@@ -164,9 +158,9 @@ def Object(cls):
     __process_attrs(cls)
     __process_fields(cls)
 
-    setattr(cls, "__init__", make_constructor(cls))
-    setattr(cls, "to_json", to_json)
-    setattr(cls, "from_json", classmethod(from_json))
-    setattr(cls, "to_dict", to_dict)
+    setattr(cls, "__init__", __make_constructor(cls))
+    setattr(cls, "to_json", __to_json)
+    setattr(cls, "from_json", classmethod(__from_json))
+    setattr(cls, "to_dict", __to_dict)
 
     return cls
