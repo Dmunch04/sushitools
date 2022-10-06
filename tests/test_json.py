@@ -32,20 +32,13 @@ def test_json_decode():
 
 
 def test_json_encode():
-    data = {
-        "name": "Daniel",
-        "obj": {
-            "key": "123",
-            "value": True
-        },
-        "fl": 12.34
-    }
+    data = {"name": "Daniel", "obj": {"key": "123", "value": True}, "fl": 12.34}
 
     json_str = to_json(data)
     assert len(json_str) == 69
 
     pretty_json_str = to_json(data, indent=4)
-    assert len(pretty_json_str.split('\n')) == 8
+    assert len(pretty_json_str.split("\n")) == 8
 
     def custom_encode_hook(src: dict[str, any], **kwargs) -> str:
         return json.dumps(src) + "..."

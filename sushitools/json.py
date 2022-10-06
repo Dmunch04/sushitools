@@ -29,24 +29,30 @@ __DEFAULT_DECODER: JSONDecoder = JSONDecoder(json.loads)
 __DEFAULT_ENCODER: JSONEncoder = JSONEncoder(json.dumps)
 
 
-#@property  - how?
+# @property  - how?
 def default_decoder() -> JSONDecoder:
     return __DEFAULT_DECODER
 
 
-#@property  - how?
+# @property  - how?
 def default_encoder() -> JSONEncoder:
     return __DEFAULT_ENCODER
 
 
-def parse_json(src: str, decode_fn: Callable[[str, ...], dict[str, any]] = None, **kwargs) -> dict[str, any]:
+def parse_json(
+    src: str, decode_fn: Callable[[str, ...], dict[str, any]] = None, **kwargs
+) -> dict[str, any]:
     if decode_fn:
         return decode_fn(src, **kwargs)
     else:
         return default_decoder().decode(src, **kwargs)
 
 
-def to_json(src: dict[str, any], encode_fn: Callable[[dict[str, any], ...], str] = None, **kwargs) -> str:
+def to_json(
+    src: dict[str, any],
+    encode_fn: Callable[[dict[str, any], ...], str] = None,
+    **kwargs
+) -> str:
     if encode_fn:
         return encode_fn(src, **kwargs)
     else:

@@ -7,7 +7,7 @@ def create_value_cb(value: Any) -> Callable:
 
 def perform_call(cb: Callable, args: List[Any], n_values: int) -> Union[Any, None]:
     call_n_args = cb.__code__.co_argcount
-    
+
     if call_n_args > 0:
         call_template = "res = call({args})"
 
@@ -15,13 +15,13 @@ def perform_call(cb: Callable, args: List[Any], n_values: int) -> Union[Any, Non
         for arg in args:
             if isinstance(arg, str):
                 arg = "'%s'" % arg
-            
+
             str_args.append(str(arg))
 
         arg_difference = call_n_args - n_values
-        if arg_difference < 0: # remove remaining values from argset
+        if arg_difference < 0:  # remove remaining values from argset
             str_args = str_args[:arg_difference]
-        elif arg_difference > 0: # add missing values to argset
+        elif arg_difference > 0:  # add missing values to argset
             for i in range(arg_difference):
                 str_args.append("None")
 
@@ -36,8 +36,7 @@ def perform_call(cb: Callable, args: List[Any], n_values: int) -> Union[Any, Non
 
 
 class Matchable(object):
-    """base class for all objects than can be matched
-    """
+    """base class for all objects than can be matched"""
 
     @classmethod
     def get_values(cls) -> List[Any]:
@@ -58,7 +57,11 @@ class Matchable(object):
 
         raise NotImplementedError
 
-    def match(self, *cases: Tuple[Any, Union[Callable, Any]], default: Union[Callable, Any, None] = None) -> Union[NoReturn, Any]:
+    def match(
+        self,
+        *cases: Tuple[Any, Union[Callable, Any]],
+        default: Union[Callable, Any, None] = None
+    ) -> Union[NoReturn, Any]:
         """matches self against all cases until a success is found
 
         Args:
@@ -74,10 +77,14 @@ class Matchable(object):
 
         for case in cases:
             if not (isinstance(case, tuple) or isinstance(case, list)):
-                raise ValueError("case must be a tuple of value and callback or return value")
+                raise ValueError(
+                    "case must be a tuple of value and callback or return value"
+                )
 
             if not len(case) == 2:
-                raise ValueError("case must only have a value and a callable or return value.")
+                raise ValueError(
+                    "case must only have a value and a callable or return value."
+                )
 
             comp, call = case
             call = call if callable(call) else create_value_cb(call)

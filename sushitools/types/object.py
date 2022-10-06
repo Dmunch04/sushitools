@@ -24,13 +24,23 @@ def __get_type_repr(t: type):
 
 
 def is_object(cls: type) -> bool:
-    return hasattr(cls, __OBJECT_NAME) and hasattr(cls, __OBJECT_FIELDS) and hasattr(cls, __OBJECT_FIELDS_LEN)
+    return (
+        hasattr(cls, __OBJECT_NAME)
+        and hasattr(cls, __OBJECT_FIELDS)
+        and hasattr(cls, __OBJECT_FIELDS_LEN)
+    )
 
 
 class ObjectField(object):
     __slots__ = ("name", "field_type", "default_value", "initialized")
 
-    def __init__(self, name: str, field_type: type, default_value: any = None, initialized: bool = False):
+    def __init__(
+        self,
+        name: str,
+        field_type: type,
+        default_value: any = None,
+        initialized: bool = False,
+    ):
         self.name = name
         self.field_type = field_type
         self.default_value = default_value
@@ -51,14 +61,30 @@ def fields(cls: type) -> list[ObjectField]:
     return [field for field in getattr(cls, __OBJECT_FIELDS).values()]
 
 
-def __to_json(self: type, *, encoder: JSONEncoder = default_encoder(), skip_null: bool = False, use_default_value: bool = False, **kwargs) -> str:
+def __to_json(
+    self: type,
+    *,
+    encoder: JSONEncoder = default_encoder(),
+    skip_null: bool = False,
+    use_default_value: bool = False,
+    **kwargs,
+) -> str:
     if not is_object(self):
         raise Exception("cannot encode non Object class to json")
 
-    return encoder.encode(__to_dict(self, skip_null=skip_null, use_default_value=use_default_value), **kwargs)
+    return encoder.encode(
+        __to_dict(self, skip_null=skip_null, use_default_value=use_default_value),
+        **kwargs,
+    )
 
 
-def __from_json(cls: type, data: str | dict[str, any], *, decoder: JSONDecoder = default_decoder(), **kwargs) -> type:
+def __from_json(
+    cls: type,
+    data: str | dict[str, any],
+    *,
+    decoder: JSONDecoder = default_decoder(),
+    **kwargs,
+) -> type:
     if not is_object(cls):
         raise Exception("cannot decode non Object class from json")
 
@@ -87,7 +113,10 @@ def __from_json(cls: type, data: str | dict[str, any], *, decoder: JSONDecoder =
             continue
         # TODO: do type checking on containers; fx list[int] -> all elements should be int
         if not any_type_of(value, field.field_type):
-            raise Exception("%s Object field '%s' must be of type '%s'" % (getattr(cls, __OBJECT_NAME), key, __get_type_repr(field.field_type)))
+            raise Exception(
+                "%s Object field '%s' must be of type '%s'"
+                % (getattr(cls, __OBJECT_NAME), key, __get_type_repr(field.field_type))
+            )
         if field.field_type is str:
             value = '"%s"' % str(value)
         args[key] = str(value)
@@ -102,7 +131,9 @@ def __from_json(cls: type, data: str | dict[str, any], *, decoder: JSONDecoder =
     return namespace["res"]
 
 
-def __to_dict(self: type, *, skip_null: bool = False, use_default_value: bool = False) -> dict[str, any]:
+def __to_dict(
+    self: type, *, skip_null: bool = False, use_default_value: bool = False
+) -> dict[str, any]:
     if not is_object(self):
         raise Exception("cannot turn non Object class into dict")
 
@@ -128,8 +159,10 @@ def __make_constructor(cls: type):
     f: list[ObjectField] = fields(cls)
 
     init_def = __OBJECT_INIT_TEMPLATE.format(
-        args=", ".join([f"{field.name}: {__get_type_repr(field.field_type)} = None" for field in f]),
-        assignments='\n'.join([f"\tself.{field.name} = {field.name}" for field in f]),
+        args=", ".join(
+            [f"{field.name}: {__get_type_repr(field.field_type)} = None" for field in f]
+        ),
+        assignments="\n".join([f"\tself.{field.name} = {field.name}" for field in f]),
     )
 
     namespace = dict(__name__="object_%s_init" % cls.__name__)
@@ -138,7 +171,11 @@ def __make_constructor(cls: type):
 
 
 def __process_attrs(cls: type):
-    setattr(cls, __OBJECT_NAME, str(cls).replace("<", "").replace(">", "").replace("'", "").split(".")[-1])
+    setattr(
+        cls,
+        __OBJECT_NAME,
+        str(cls).replace("<", "").replace(">", "").replace("'", "").split(".")[-1],
+    )
 
 
 def __process_fields(cls: type):

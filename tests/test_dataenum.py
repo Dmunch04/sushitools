@@ -1,5 +1,6 @@
 from sushitools.types import dataenum
 
+
 def test_dataenum():
     Gender = dataenum(
         "Gender", ("Male", "name", "age"), ("Female", "name", "age", "is_pregnant")

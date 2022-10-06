@@ -1,2 +1,2 @@
-poetry run black dtools
+poetry run black sushitools
 poetry run black tests
