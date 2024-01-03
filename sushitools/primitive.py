@@ -1,7 +1,12 @@
+from typing import TypeVar, List
 from types import GenericAlias
 
 
-def is_primitive(t: any) -> bool:
+T = TypeVar("T")
+O = TypeVar("O")
+
+
+def is_primitive(t: T) -> bool:
     """checks whether the type of `t` is one of the primitive types in python
 
     Args:
@@ -29,7 +34,7 @@ def is_primitive(t: any) -> bool:
     )
 
 
-def is_number(t: any) -> bool:
+def is_number(t: T) -> bool:
     """checks whether the type of `t` is a primitive number type.
     this includes:
     - int
@@ -51,7 +56,7 @@ def is_number(t: any) -> bool:
     )
 
 
-def is_container(t: any) -> bool:
+def is_container(t: T) -> bool:
     """checks whether the type of `t` is a primitive container type.
     this includes:
     - list
@@ -80,7 +85,23 @@ def is_container(t: any) -> bool:
     )
 
 
-def any_type_of(t: any, o: any) -> bool:
+def ensure_container(t: T) -> List[T]:
+    """
+    Ensures that the provided parameter is a container.
+
+    Args:
+        t: The parameter to be checked.
+
+    Returns:
+        A list containing the parameter if it is not already a container.
+    """
+    if not is_container(t):
+        t = [t]
+
+    return t
+
+
+def any_type_of(t: T, o: O) -> bool:
     """checks whether `t` is of any type of `o`.
     this includes aliases, such as `list[int]`.
     this means that `any_type_of(list, list[int])` returns `True`

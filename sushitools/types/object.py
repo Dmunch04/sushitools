@@ -184,6 +184,60 @@ def __to_dict(
     return d
 
 
+def __copy_from(self: T, other: T):
+    if not is_object(self):
+        raise Exception("cannot copy to non Object class")
+    if not is_object(other):
+        raise Exception("cannot copy from non Object class")
+
+    other_fields: list[ObjectField] = fields(other)
+    for field in other_fields:
+        setattr(self, field.name, field.get_value(other))
+
+
+def __of(other: T):
+    if not is_object(other):
+        raise Exception("cannot copy from non Object class")
+
+    t = type(other)()
+    __copy_from(t, other)
+    return t
+
+
+def __load_json(self: T, data: str | dict[str, any], *, decoder: JSONDecoder = default_decoder(), **kwargs):
+    if not is_object(self):
+        raise Exception("cannot decode non Object class from json")
+
+    if isinstance(data, str):
+        data = decoder.decode(data, **kwargs)
+
+    f: list[ObjectField] = getattr(self, __OBJECT_FIELDS)
+
+    args: dict[str, str] = {}
+    for key, value in data.items():
+        field = f.get(key, None)
+        if field is None:
+            continue
+        elif value is None:
+            # TODO: NOTE: hmm perhaps this check should be outside this dict? so if the key wasn't in the given data
+            # ^ then we should check it. because if the key was in data and value is None/null, then shouldn't that
+            # ^ override the default value, compared to if None/null wasn't provided in the data. to clarify: if `data`
+            # ^ contains "key" with value of "None" then the field should be set to "None". if `data` on the other hand
+            # ^ did not contain "key" then the "key" field should become ("key").default_value
+            if not field.initialized:
+                setattr(self, field.name, None)
+            else:
+                setattr(self, field.name, field.default_value)
+            continue
+        # TODO: do type checking on containers; fx list[int] -> all elements should be int
+        if not any_type_of(value, field.field_type):
+            raise Exception(
+                "%s Object field '%s' must be of type '%s'"
+                % (getattr(self, __OBJECT_NAME), key, __get_type_repr(field.field_type))
+            )
+        setattr(self, field.name, value)
+
+
 def __make_constructor(cls: T) -> Callable:
     if not is_object(cls):
         raise Exception("cannot make constructor for non Object class")
@@ -192,7 +246,7 @@ def __make_constructor(cls: T) -> Callable:
 
     init_def = __OBJECT_INIT_TEMPLATE.format(
         args=", ".join(
-            [f"{field.name}: {__get_type_repr(field.field_type)} = None" for field in f]
+            [f"{field.name}: {__get_type_repr(field.field_type)} = {f'"{field.default_value}"' if field.field_type == str else field.default_value if field.default_value else "None"}" for field in f]
         ),
         assignments="\n".join([f"\tself.{field.name} = {field.name}" for field in f]),
     )
@@ -221,16 +275,33 @@ def __process_fields(cls: T):
 
 
 def Object(cls: T) -> T:
-    """decorator for adding helpful methods to your class
-    TODO: write more
-
-    Args:
-        cls (T): ...
-
-    Returns:
-        T: the processed Object class
     """
+    This is the main Object decorator function.
 
+    This function checks if a passed in class is of type 'cls'. If not, an exception is thrown.
+
+    After the type check, the processed class is enriched with additional attributes and methods
+    which provide JSON and dictionary conversions, along with a new constructor. These are achieved
+    by extending the behavior of the class via the `setattr` method.
+
+    The Object decorator is intended to enhance your class by injecting these predefined methods for
+    common operations.
+
+    Parameters
+    ----------
+    cls: type
+        A class to be processed. The class type is generic and is signified as 'T'.
+
+    Returns
+    -------
+    T: type
+        The enriched class with additional methods and attributes.
+
+    Raises
+    ------
+    Exception:
+        An exception is raised if the passed object is not a class.
+    """
     if not isinstance(cls, type):
         raise Exception("Object decorator can only be used on class object")
 
@@ -241,5 +312,8 @@ def Object(cls: T) -> T:
     setattr(cls, "to_json", __to_json)
     setattr(cls, "from_json", classmethod(__from_json))
     setattr(cls, "to_dict", __to_dict)
+    setattr(cls, "copy_from", __copy_from)
+    setattr(cls, "of", staticmethod(__of))
+    setattr(cls, "load_json", __load_json)
 
     return cls

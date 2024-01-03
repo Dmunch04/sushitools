@@ -8,6 +8,24 @@ def test_INIT():
     default_decoder().hook(json.loads)
 
 
+def test_instance_from_json():
+    @Object
+    class Method:
+        access_modifiers: int = 0
+        return_type: str = "void"
+        name: str = ""
+        param_types: list[str] = []
+
+    init_method: Method = Method(access_modifiers=21, return_type="void", name="init", param_types=["string", "string"])
+    second_init_method: Method = Method.of(init_method)
+    print(init_method.name)
+    print(second_init_method.name)
+
+    third_init_method = Method()
+    third_init_method.load_json(init_method.to_json())
+    print(third_init_method.name)
+
+
 def test_struct():
     @Object
     class Person:

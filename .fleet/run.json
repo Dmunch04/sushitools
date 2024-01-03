@@ -1,0 +1,13 @@
+{
+    "configurations": [
+        {
+            "type": "python-tests",
+            "name": "test",
+            "testFramework": "pytest",
+            "targetType": "path",
+            "targets": ["tests/"],
+            "arguments": ["--capture=no"],
+        },
+        
+    ]
+}

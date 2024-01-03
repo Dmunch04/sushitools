@@ -1,0 +1,16 @@
+{
+    "plugins": [
+        {
+            "type": "add",
+            "pluginName": "fleet.ai"
+        },
+        {
+            "type": "add",
+            "pluginName": "fleet.git.frontend"
+        },
+        {
+            "type": "add",
+            "pluginName": "fleet.python"
+        }
+    ]
+}
