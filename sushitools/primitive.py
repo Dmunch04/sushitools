@@ -125,3 +125,54 @@ def any_type_of(t: T, o: O) -> bool:
         o = type(o)
 
     return t == o
+
+
+def camel_to_snake(s: str) -> str:
+    """
+    Converts a camel case string to snake case.
+
+    Args:
+        s (str): The camel case string to convert.
+
+    Returns:
+        str: The converted snake case string.
+
+    Example:
+        >>> camel_to_snake("camelCase")
+        'camel_case'
+
+    """
+    return "".join(["_" + c.lower() if c.isupper() else c for c in s]).lstrip("_")
+
+
+def snake_to_camel(s: str) -> str:
+    """
+    Converts a snake_case string to camelCase.
+
+    Args:
+        s (str): The snake_case string to be converted.
+
+    Returns:
+        str: The camelCase string.
+
+    Example:
+        >>> snake_to_camel("hello_world")
+        'helloWorld'
+        >>> snake_to_camel("snake_case_example")
+        'snakeCaseExample'
+    """
+    return "".join(c.capitalize() for c in s.lower().split("_"))
+
+
+def snake_to_lower_camel(s: str) -> str:
+    """
+    Converts a snake_case string to lower camel case.
+
+    Args:
+        s: A snake_case string.
+
+    Returns:
+        A lower camel case representation of the input string.
+    """
+    camel_string = snake_to_camel(s)
+    return s[0].lower() + camel_string[1:]

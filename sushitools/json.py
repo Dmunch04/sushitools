@@ -1,6 +1,67 @@
-import sys
 import json
-from typing import Callable
+from typing import Callable, Dict, Type, Generic, TypeVar, Any, Self
+from .primitive import is_primitive
+
+
+T = TypeVar('T')
+
+
+class JSONCastable(Generic[T]):
+    @staticmethod
+    def from_json_element(self, value: str) -> T:
+        raise NotImplementedError
+
+
+class JSONElement:
+    __slots__ = ("value",)
+
+    def __init__(self, value: str):
+        self.value = value
+
+    def to(self, t: Type):
+        if is_primitive(t):
+            return t(self.value)
+        elif issubclass(t, JSONCastable):
+            return t.from_json_element(self.value)
+        else:
+            raise TypeError("can't convert value to non-primitive type {}".format(t.__name__))
+
+
+class JSONDocument(JSONCastable[Self]):
+    __slots__ = ("_json_data",)
+
+    def __init__(self, json_data: Dict[str, JSONElement] = None):
+        if json_data is None:
+            json_data = dict()
+
+        self._json_data = json_data
+
+    def __getitem__(self, item: str) -> JSONElement:
+        if item not in self._json_data.keys():
+            raise KeyError(item)
+
+        return JSONElement(self._json_data[item])
+
+    def __setitem__(self, key: str, value: Any) -> Any:
+        if key not in self._json_data.keys():
+            raise KeyError(key)
+
+        self._json_data[key] = str(value)
+        return value
+
+    def clear(self) -> bool:
+        self._json_data.clear()
+        return True
+
+
+def json_deserialize(src: str, doc: JSONDocument = None) -> JSONDocument:
+    if doc is None:
+        doc = JSONDocument()
+    doc.clear()
+
+
+
+    return doc
 
 
 class JSONDecoder:

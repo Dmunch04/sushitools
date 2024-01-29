@@ -1,6 +1,6 @@
 import json
 from sushitools.json import default_encoder, default_decoder
-from sushitools.types import Object, fields, is_object, ObjectField
+from sushitools.types import Object, fields, is_object, ObjectField, keymap
 
 
 def test_INIT():
@@ -54,3 +54,42 @@ def test_struct():
     field: ObjectField = fields(Person)[0]
     assert field.get_value(a) == "Daniel"
     assert field.get_value(b) == "Bob"
+
+
+def test_object_key_map():
+    @keymap("myKEY", "some_key")
+    @Object
+    class Yeet:
+        some_key: str
+
+    yeet: Yeet = Yeet.from_json({"myKEY": "yeet"})
+    print(yeet.some_key)
+
+
+def test_nested_object():
+    @Object
+    class ID:
+        country: str
+        security_number: int
+
+    @Object
+    class Person:
+        name: str
+        id: ID
+        age: int
+
+    json_data: str = """\
+{
+    "name": "Daniel",
+    "id": {
+        "country": "Denmark",
+        "security_number": 12345678
+    },
+    "age": 19
+}
+"""
+    person: Person = Person.from_json(json_data)
+    print(person.name)
+    print(person.id.country)
+    print(person.id.security_number)
+    print(person.age)

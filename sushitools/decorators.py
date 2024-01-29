@@ -1,4 +1,4 @@
-from typing import Callable, Any, Type, Union, get_type_hints
+from typing import Callable, Any, Type, Union, get_type_hints, NoReturn
 import warnings
 
 
@@ -116,5 +116,19 @@ def posarg(index: int, expected_arg_type: Type) -> Callable:
             if not is_instance_of_any_type(value, expected_arg_type):
                 raise TypeError(
                     f"Positional argument at index {index} is expected to be of type '{expected_arg_type.__name__}' but received '{type(value).__name__}'")
+        return wrapper
+    return decorator
+
+
+def timer(callback: Callable[[str], NoReturn]) -> Callable:
+    def decorator(func: Callable) -> Callable:
+        def wrapper(*args, **kwargs):
+            import time
+            start_time = time.time()
+            result = func(*args, **kwargs)
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            callback(str(elapsed_time))
+            return result
         return wrapper
     return decorator

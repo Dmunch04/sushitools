@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sushitools"
-version = "0.1.3"
+version = "0.1.5"
 description = "python package with various different utilities and tools to make life easier."
 authors = ["munchii <daniellmunch@gmail.com>"]
 license = "MIT"

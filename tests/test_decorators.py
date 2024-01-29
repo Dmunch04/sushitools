@@ -1,4 +1,4 @@
-from sushitools.decorators import deprecated, returns, arg, posarg
+from sushitools.decorators import deprecated, returns, arg, posarg, timer
 
 
 def test_deprecated():
@@ -32,8 +32,21 @@ def test_arg() -> None:
 
 
 def test_posarg() -> None:
-    @arg("a", int)
+    #@arg("a", int)
+    @posarg(0, int)
+    @posarg(1, int)
     def add(a: int, b: int) -> int:
         return a + b
 
     add(1, "2.0")
+
+
+def test_timer() -> None:
+    @timer(print)
+    def long_task():
+        for i in range(100_000_000):
+            pass
+
+    long_task()
+
+

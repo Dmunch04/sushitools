@@ -1,8 +1,7 @@
 from types import GenericAlias
-from typing import TypeVar, Callable
+from typing import TypeVar, Callable, Dict, Any
 from ..json import JSONEncoder, JSONDecoder, default_encoder, default_decoder
-from ..primitive import any_type_of
-
+from ..primitive import any_type_of, is_container, camel_to_snake, is_primitive
 
 T = TypeVar("T")
 
@@ -10,6 +9,7 @@ T = TypeVar("T")
 __OBJECT_NAME = "__object_name__"
 __OBJECT_FIELDS = "__object_fields__"
 __OBJECT_FIELDS_LEN = "__object_fields_len__"
+__OBJECT_KEY_MAPS = "__object_key_maps__"
 
 __OBJECT_INIT_TEMPLATE = """\
 def __init__(self, {args}):
@@ -17,10 +17,12 @@ def __init__(self, {args}):
 """
 
 
-def __get_type_repr(t: type):
+def __get_type_repr(t: type) -> str:
     if isinstance(t, GenericAlias):
-        return str(t)
+        return f"{t.__origin__.__name__}[{', '.join(__get_type_repr(arg) for arg in t.__args__)}]"
     else:
+        if not is_primitive(t):
+            return "any"
         return t.__name__
 
 
@@ -97,6 +99,7 @@ def __to_json(
     self: T,
     *,
     encoder: JSONEncoder = default_encoder(),
+    key_mangler: Callable[[str], str] = lambda x: x,
     skip_null: bool = False,
     use_default_value: bool = False,
     **kwargs,
@@ -115,6 +118,7 @@ def __from_json(
     data: str | dict[str, any],
     *,
     decoder: JSONDecoder = default_decoder(),
+    key_demangler: Callable[[str], str] = camel_to_snake,
     **kwargs,
 ) -> T:
     if not is_object(cls):
@@ -126,9 +130,12 @@ def __from_json(
         data = decoder.decode(data, **kwargs)
 
     f = getattr(cls, __OBJECT_FIELDS)
+    key_maps = getattr(cls, __OBJECT_KEY_MAPS, {})
 
     args: dict[str, str] = {}
     for key, value in data.items():
+        key = key_maps.get(key, key_demangler(key))
+
         field = f.get(key, None)
         if field is None:
             continue
@@ -144,13 +151,38 @@ def __from_json(
                 args[key] = str(field.default_value)
             continue
         # TODO: do type checking on containers; fx list[int] -> all elements should be int
-        if not any_type_of(value, field.field_type):
+        if is_container(field.field_type):
+            sub_types: tuple[type] = field.field_type.__args__
+            if not isinstance(value, (list, dict)):
+                raise Exception()
+            if isinstance(value, list):
+                final: list[any] = []
+                if len(sub_types) == 1:
+                    typ: type = sub_types[0]
+                    for val in value:
+                        if is_object(typ):
+                            final.append(typ.from_json(val))
+                else:
+                    print("fuck")
+
+                print(final)
+                value = str(final)
+            elif isinstance(value, dict):
+                if len(sub_types) != 2:
+                    raise Exception()
+                key_type, value_type = sub_types[0], sub_types[1]
+                value = {__from_json(key_type, k): __from_json(value_type, v) for k, v in value.items()}
+            else:
+                raise Exception()
+        elif not any_type_of(value, field.field_type):
             raise Exception(
                 "%s Object field '%s' must be of type '%s'"
                 % (getattr(cls, __OBJECT_NAME), key, __get_type_repr(field.field_type))
             )
         if field.field_type is str:
             value = '"%s"' % str(value)
+        elif is_object(field.field_type):
+            value = "%s.from_json(%s)" % (field.field_type, str(value))
         args[key] = str(value)
 
     instantiate_call = "res = OBJECT({args})".format(
@@ -251,6 +283,8 @@ def __make_constructor(cls: T) -> Callable:
         assignments="\n".join([f"\tself.{field.name} = {field.name}" for field in f]),
     )
 
+    print(init_def)
+
     namespace = dict(__name__="object_%s_init" % cls.__name__)
     exec(init_def, namespace)
     return namespace["__init__"]
@@ -262,16 +296,41 @@ def __process_attrs(cls: T):
         __OBJECT_NAME,
         str(cls).replace("<", "").replace(">", "").replace("'", "").split(".")[-1],
     )
+    setattr(
+        cls,
+        __OBJECT_KEY_MAPS,
+        {}
+    )
 
 
 def __process_fields(cls: T):
-    fields = {}
+    fields: dict[Any, ObjectField] = {}
     for key, ftype in getattr(cls, "__annotations__").items():
         df = getattr(cls, str(key), None)
-        fields[key] = ObjectField(key, ftype, df or ftype(), df is not None)
+        if not is_primitive(ftype):
+            fields[key] = ObjectField(key, ftype, None, False)
+        else:
+            fields[key] = ObjectField(key, ftype, df or ftype(), df is not None)
 
     setattr(cls, __OBJECT_FIELDS, fields)
     setattr(cls, __OBJECT_FIELDS_LEN, len(fields))
+
+
+def keymap(in_key: str, out_key: str) -> T:
+    def wrapper(cls: T) -> T:
+        if not is_object(cls):
+            raise Exception()
+
+        field_names = [field.name for field in fields(cls)]
+        if out_key not in field_names:
+            raise Exception()
+
+        key_maps = getattr(cls, __OBJECT_KEY_MAPS, {})
+        key_maps[in_key] = out_key
+        setattr(cls, __OBJECT_KEY_MAPS, key_maps)
+
+        return cls
+    return wrapper
 
 
 def Object(cls: T) -> T:
